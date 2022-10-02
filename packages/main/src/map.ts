@@ -1,64 +1,65 @@
-import { Merge } from './types';
+import { getByPath, Tree, TreeOptions } from './tree';
 
-type MapContext<I extends object> = {
-  index?: number;
-  depth: number;
+type MapRootContext<I extends object = object> = {
+  isRoot: true;
   path: number[];
+  depth: 0;
   tree: I;
-  parent?: I;
-  siblings?: I[];
-  prev?: I;
-  next?: I;
   children?: I[];
 };
 
-type MapFunction<I extends object, O extends object> = (target: I, context: MapContext<I>, children?: O[]) => O;
+type MapNodeContext<I extends object = object> = {
+  isRoot: false;
+  path: number[];
+  depth: number;
+  tree: I;
+  children?: I[];
+  index: number;
+  parent: I;
+  siblings: I[];
+  prev?: I;
+  next?: I;
+};
 
-type MapOptions = Partial<{
-  /** The default `childrenProp` value is `children` */
-  childrenProp: string;
-}>;
+export type MapContext<I extends object> = MapRootContext<I> | MapNodeContext<I>;
 
-type MapWithContextArgument<I extends object, O extends object> = Merge<
-  { func: MapFunction<I, O>; options: MapOptions } & Pick<MapContext<I>, 'tree' | 'parent' | 'path'>
->;
+type MapFunction<I extends object, R extends object> = (target: I, context: MapContext<I>, children?: R[]) => R;
+
+type MapOptions<K extends string = string> = TreeOptions<K>;
 
 const mapWithContext =
-  <I extends object, O extends object>({ func, options, tree, parent, path }: MapWithContextArgument<I, O>) =>
-  (element: I, index: number, arr: I[]) => {
-    const { childrenProp = 'children' } = options;
-    const children = element[childrenProp];
-    const context: MapContext<I> = {
-      index,
-      path: [...path, index],
-      depth: path.length + 1,
-      tree,
-      parent,
-      siblings: arr,
-      prev: arr[index - 1],
-      next: arr[index + 1],
-      children,
-    };
+  <I extends object, R extends object>(mapArgs: [I, MapFunction<I, R>, Required<MapOptions>], path: number[]) =>
+  (element: I, index?: number, arr?: I[]) => {
+    const [tree, func, options] = mapArgs;
+    const { childrenKey } = options;
 
-    return func(
-      element,
-      context,
-      children.map(mapWithContext({ func, options, tree, parent: element, path: context.path }))
-    );
+    const isRoot = typeof index !== 'number';
+    const children = element[childrenKey];
+    const context: MapContext<I> = isRoot
+      ? { isRoot, path: [], depth: 0, tree, children }
+      : {
+          isRoot: false,
+          path: [...path, index],
+          depth: path.length + 1,
+          tree,
+          children,
+          index,
+          parent: getByPath(tree, path, options),
+          siblings: arr,
+          prev: arr[index - 1],
+          next: arr[index + 1],
+        };
+    const mapped = (element[childrenKey] as I[])?.map(mapWithContext(mapArgs, path));
+    return { ...func(element, context, mapped), [childrenKey]: mapped };
   };
 
-export const map = <I extends object, O extends object>(tree: I, func: MapFunction<I, O>, options: MapOptions): O => {
-  const path = [];
-  const { childrenProp = 'children' } = options;
-  const children = tree[childrenProp];
-  const context: MapContext<I> = {
-    path,
-    depth: path.length,
-    tree,
-    children,
-  };
-  return func(tree, context, children.map(mapWithContext({ func, options, tree, parent: tree, path })));
-};
+const defaultOptions: Required<MapOptions> = { childrenKey: 'children' };
+
+export const map = <I extends Tree<K>, R extends Tree<K>, K extends string = 'children'>(
+  tree: I,
+  func: MapFunction<I, R>,
+  options?: MapOptions<K>
+): R => mapWithContext([tree, func, { ...defaultOptions, ...options }], [])(tree);
 
 export const tree = { map };
 
