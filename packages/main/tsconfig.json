@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "outDir": "lib/esm",
+    "module": "esnext",
+    "target": "es5",
+    "lib": ["esnext"],
+    "declaration": true,
+    "moduleResolution": "node"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "lib"]
+}

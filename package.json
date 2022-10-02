@@ -1,0 +1,32 @@
+{
+  "name": "tree-funcs-root",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "workspaces": [
+    "packages/**"
+  ],
+  "scripts": {
+    "build": "yarn workspace main build",
+    "ci": "yarn fix && yarn test",
+    "commit": "yarn lint-staged && cz",
+    "coverage": "yarn workspace main test --coverage",
+    "deploy": "GIT_USER=michiharu yarn workspace website deploy",
+    "fix": "yarn workspace tree-funcs fix",
+    "lint-staged": "yarn workspace tree-funcs lint-staged",
+    "sort": "sort-package-json",
+    "start": "yarn workspace website start",
+    "test": "yarn workspace tree-funcs test",
+    "watch": "yarn workspace tree-funcs watch"
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-customizable"
+    }
+  },
+  "devDependencies": {
+    "commitizen": "^4.2.5",
+    "cz-customizable": "^7.0.0",
+    "sort-package-json": "^2.0.0"
+  }
+}
