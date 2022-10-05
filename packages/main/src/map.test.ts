@@ -13,7 +13,30 @@ test('basic', () => {
       { id: 'c', children: [{ id: 'd', children: [] }] },
     ],
   };
-  const result = map(data, (t) => ({ ...t, prop: 'test' }));
+  const result = map(data, (t, { isRoot, root, node }, children) => {
+    if (isRoot) {
+      const { path, depth } = root;
+      expect(path).toEqual([]);
+      expect(depth).toBe(0);
+      root.children.forEach((c) => {
+        expect('prop' in c).toBe(false);
+      });
+      children.forEach((c) => {
+        if (typeof c === 'object') expect('prop' in c).toBe(true);
+      });
+      return { ...t, prop: 'test' };
+    }
+    const { path, depth } = node;
+    // expect(path).toEqual([]);
+    expect(depth).toBe(path.length);
+    node.children.forEach((c) => {
+      expect('prop' in c).toBe(false);
+    });
+    children.forEach((c) => {
+      if (typeof c === 'object') expect('prop' in c).toBe(true);
+    });
+    return { ...t, prop: 'test' };
+  });
   expect(result).toEqual({
     id: 'a',
     prop: 'test',
@@ -43,7 +66,10 @@ test('no children', () => {
 test('set childrenKey', () => {
   const data = {
     id: 'a',
-    childNodes: [{ id: 'b' }, { id: 'c', childNodes: [{ id: 'd', childNodes: [] }] }],
+    childNodes: [
+      { id: 'b', childNodes: [] },
+      { id: 'c', childNodes: [{ id: 'd', childNodes: [] }] },
+    ],
   };
   const result = map(data, (t) => ({ ...t, prop: 'test' }), { childrenKey: 'childNodes' });
   expect(result).toEqual({

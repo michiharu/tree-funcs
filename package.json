@@ -10,7 +10,7 @@
     "build": "yarn workspace main build",
     "ci": "yarn fix && yarn test",
     "commit": "yarn lint-staged && cz",
-    "coverage": "yarn workspace main test --coverage",
+    "coverage": "yarn workspace tree-funcs test --coverage",
     "deploy": "GIT_USER=michiharu yarn workspace website deploy",
     "fix": "yarn workspace tree-funcs fix",
     "lint-staged": "yarn workspace tree-funcs lint-staged",
